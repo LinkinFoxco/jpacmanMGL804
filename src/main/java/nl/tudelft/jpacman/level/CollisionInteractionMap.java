@@ -115,23 +115,42 @@ public class CollisionInteractionMap implements CollisionMap {
     @Override
     public <C1 extends Unit, C2 extends Unit> void collide(C1 collider,
                                                            C2 collidee) {
-        Class<? extends Unit> colliderKey = getMostSpecificClass(handlers, collider.getClass());
-        if (colliderKey == null) {
-            return;
-        }
-
-        Map<Class<? extends Unit>, CollisionHandler<?, ?>> map = handlers.get(colliderKey);
-        Class<? extends Unit> collideeKey = getMostSpecificClass(map, collidee.getClass());
-        if (collideeKey == null) {
-            return;
-        }
-
-        CollisionHandler<C1, C2> collisionHandler = (CollisionHandler<C1, C2>) map.get(collideeKey);
+        CollisionHandler<C1, C2> collisionHandler = getCollisionHandler(C1, C2);
         if (collisionHandler == null) {
             return;
         }
 
         collisionHandler.handleCollision(collider, collidee);
+    }
+
+    /**
+     * Returns the collision handler between two colliding parties, 
+     * if a suitable collision handler is listed.
+     *
+     * @param <C1>
+     *            The collider type.
+     * @param <C2>
+     *            The collidee (unit that was moved into) type.
+     *
+     * @param collider
+     *            The collider.
+     * @param collidee
+     *            The collidee.
+     */
+    @SuppressWarnings("unchecked")
+    private <C1 extends Unit, C2 extends Unit> CollisionHandler<C1, C2> getCollisionHandler(C1 collider, C2 collidee) {
+        Class<? extends Unit> colliderKey = getMostSpecificClass(handlers, collider.getClass());
+        if (colliderKey == null) {
+            return null;
+        }
+
+        Map<Class<? extends Unit>, CollisionHandler<?, ?>> map = handlers.get(colliderKey);
+        Class<? extends Unit> collideeKey = getMostSpecificClass(handlers.get(colliderKey), collidee.getClass());
+        if (collideeKey == null) {
+            return null;
+        }
+
+        return (CollisionHandler<C1, C2>) map.get(collideeKey);
     }
 
     /**
